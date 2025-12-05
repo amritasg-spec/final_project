@@ -1,7 +1,6 @@
 import sqlite3
 from edamam_api import get_edamam_nutrition, store_edamam_nutrition
 from kroger_api import get_kroger_products
-#save for wilo func 
 
 def main():
     conn = sqlite3.connect("final_project.db")
@@ -22,4 +21,12 @@ def main():
         );
     """)
 
+    ingredients = ["2 eggs", "1 cup milk", "1 tbsp sugar"]
+    nutrition = get_edamam_nutrition(ingredients)
+    store_edamam_nutrition(cursor, 1, nutrition)
+
     conn.commit()
+    conn.close()
+
+if __name__ == "__main__":
+    main()
