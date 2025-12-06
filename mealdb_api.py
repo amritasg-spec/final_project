@@ -6,7 +6,7 @@ import sqlite3
 APP_KEY = '1'
 BASE_URL = f'https://www.themealdb.com/api/json/v1/{APP_KEY}/'
 
-def get_mealdb(query):
+def get_mealdb(query, limit=25):
     url = BASE_URL + 'search.php'
     params = {'s': query}
     response = requests.get(url, params=params)
@@ -41,6 +41,58 @@ def process_mealdb_result(data):
 
         result.append(meal_info)
     return result
+def create_meal_tables():
+    conn = sqlite3.connect("final_project.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS meals (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            category TEXT,
+            area TEXT,
+            instructions TEXT,
+            thumbnail TEXT,
+            tags TEXT,
+            youtube TEXT
+        );
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ingredients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            meal_id INTEGER,
+            ingredient TEXT,
+            measure TEXT,
+            FOREIGN KEY (meal_id) REFERENCES meals(id)
+        );
+    """)  
+    conn.commit()
+    conn.close()  
+
+def store_meal(cursor, meal):
+    cursor.execute("""
+        INSERT OR REPLACE INTO meals (id, name, category, area, instructions, thumbnail, tags, youtube)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        meal["id"],
+        meal["name"],
+        meal["category"],
+        meal["area"],
+        meal["instructions"],
+        meal["thumbnail"],
+        meal["tags"],
+        meal["youtube"]
+    ))
+
+    for ingredient in meal["ingredients"]:
+        cursor.execute("""
+            INSERT INTO ingredients (meal_id, ingredient, measure)
+            VALUES (?, ?, ?)
+        """, (
+            meal["id"],
+            ingredient["ingredient"],
+            ingredient["measure"]
+        ))
 
 
 
@@ -52,4 +104,13 @@ if __name__ == "__main__":
     # 2. Process the data into cleaned JSON objects
     meals = process_mealdb_result(raw)
     print(f"Processed {len(meals)} meals.")
+
+    conn = sqlite3.connect("final_project.db")
+    cursor = conn.cursor()
+    create_meal_tables()
+    for meal in meals:
+        store_meal(cursor, meal)
+    conn.commit()
+    conn.close()
+    print("Meals stored in database.")
 
