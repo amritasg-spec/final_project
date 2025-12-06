@@ -1,7 +1,7 @@
 import requests
 
-APP_ID = "YOUR_ID"
-APP_KEY = "YOUR_KEY"
+APP_ID = "d34f7e4a"
+APP_KEY = "d95639f6e0b93ab57a3291358c365f26"
 
 def get_edamam_nutrition(ingredient_list):
 
@@ -46,12 +46,17 @@ def store_edamam_nutrition(cursor, meal_id, nutrition_json):
 
     diet_labels = ", ".join(nutrition_json.get("dietLabels", []))
     health_labels = ", ".join(nutrition_json.get("healthLabels", []))
+    cuisineType = ", ".join(nutrition_json.get("cuisineType", []))
+    mealType = ", ".join(nutrition_json.get("mealType", []))
+    dishType = ", ".join(nutrition_json.get("dishType", []))
 
     cursor.execute("""
         INSERT OR REPLACE INTO meal_nutrition
-        (meal_id, calories, protein, fat, carbs, sugar, fiber, sodium, diet_labels, health_labels)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (meal_id, calories, protein, fat, carbs, sugar, fiber, sodium, 
+         diet_labels, health_labels, cuisineType, mealType, dishType)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        meal_id, calories, protein, fat, carbs, sugar, fiber, sodium, diet_labels, health_labels
+    meal_id, calories, protein, fat, carbs, sugar, fiber, sodium,
+    diet_labels, health_labels, cuisineType, mealType, dishType
     ))
 
