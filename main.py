@@ -1,7 +1,7 @@
 import sqlite3
 from edamam_api import get_edamam_nutrition, store_edamam_nutrition
 from kroger_api import get_kroger_products
-from mealdb_api import create_meal_tables
+from mealdb_api import create_meal_tables, store_meal
 
 def main():
     conn = sqlite3.connect("final_project.db")
