@@ -4,10 +4,10 @@ import sqlite3
 #calculation 1: average calories per meal
 def calculate_average_calories(cursor): 
     cursor.execute("""
-        SELECT meals.strCategory, AVG(meal_nutrition.calories)
+        SELECT meals.category, AVG(meal_nutrition.calories)
         FROM meal_nutrition
-        JOIN meals ON meals.idMeal = meal_nutrition.meal_id
-        GROUP BY meals.strCategory;
+        JOIN meals ON meals.id = meal_nutrition.meal_id
+        GROUP BY meals.category;
     """)
 
     results = cursor.fetchall()
@@ -42,3 +42,13 @@ def calculate_healthy_available_score(cursor):
 
     results = cursor.fetchall()
     return {row[0]: row[1] + row[2] for row in results}
+
+
+if __name__ == "__main__":
+    conn = sqlite3.connect("final_project.db")
+    cursor = conn.cursor()
+
+    avg_calories = calculate_average_calories(cursor)
+    for category, cal in avg_calories.items():
+        print(f"{category}: {cal:.2f} kcal")
+    conn.close()
