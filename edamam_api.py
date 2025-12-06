@@ -30,19 +30,27 @@ def get_edamam_nutrition(ingredient_list):
 
 
 def store_edamam_nutrition(cursor, meal_id, nutrition_json):
-
     if nutrition_json is None:
         return
+    total_calories = 0
+    total_protein = 0
+    total_fat = 0
+    total_carbs = 0
+    total_sugar = 0
+    total_fiber = 0
+    total_sodium = 0
 
-    calories = nutrition_json.get("calories")
-    nutrients = nutrition_json.get("totalNutrients", {})
+    for ing in nutrition_json.get("ingredients", []):
+        for parsed in ing.get("parsed", []):
+            nutrients = parsed.get("nutrients", {})
 
-    protein = nutrients.get("PROCNT", {}).get("quantity")
-    fat = nutrients.get("FAT", {}).get("quantity")
-    carbs = nutrients.get("CHOCDF", {}).get("quantity")
-    sugar = nutrients.get("SUGAR", {}).get("quantity")
-    fiber = nutrients.get("FIBTG", {}).get("quantity")
-    sodium = nutrients.get("NA", {}).get("quantity")
+            total_calories += nutrients.get("ENERC_KCAL", {}).get("quantity", 0)
+            total_protein  += nutrients.get("PROCNT", {}).get("quantity", 0)
+            total_fat      += nutrients.get("FAT", {}).get("quantity", 0)
+            total_carbs    += nutrients.get("CHOCDF", {}).get("quantity", 0)
+            total_sugar    += nutrients.get("SUGAR", {}).get("quantity", 0)
+            total_fiber    += nutrients.get("FIBTG", {}).get("quantity", 0)
+            total_sodium   += nutrients.get("NA", {}).get("quantity", 0)
 
     diet_labels = ", ".join(nutrition_json.get("dietLabels", []))
     health_labels = ", ".join(nutrition_json.get("healthLabels", []))
@@ -52,11 +60,14 @@ def store_edamam_nutrition(cursor, meal_id, nutrition_json):
 
     cursor.execute("""
         INSERT OR REPLACE INTO meal_nutrition
-        (meal_id, calories, protein, fat, carbs, sugar, fiber, sodium, 
+        (meal_id, calories, protein, fat, carbs, sugar, fiber, sodium,
          diet_labels, health_labels, cuisineType, mealType, dishType)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-    meal_id, calories, protein, fat, carbs, sugar, fiber, sodium,
-    diet_labels, health_labels, cuisineType, mealType, dishType
+        total_calories, total_protein, total_fat, total_carbs,
+        total_sugar, total_fiber, total_sodium,
+        diet_labels, health_labels, cuisineType, mealType, dishType
     ))
+
+    print(f"Stored Edamam totals for meal {meal_id}")
 
