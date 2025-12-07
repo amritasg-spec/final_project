@@ -16,10 +16,11 @@ def calculate_average_calories(cursor):
 #calculation 2: estimated grocery cost per recipe 
 def calculate_recipe_cost(cursor):
     cursor.execute("""
-        SELECT ingredients.meal_id, SUM(grocery_products.regular_price)
+        SELECT ingredients.meal_id,
+               SUM(COALESCE(grocery_products.regular_price, 0))
         FROM ingredients
         LEFT JOIN grocery_products
-        ON ingredients.ingredient = grocery_products.ingredient_name
+            ON ingredients.ingredient = grocery_products.ingredient_name
         GROUP BY ingredients.meal_id;
     """)
 

@@ -47,7 +47,7 @@ def process_meals(cursor, conn, only_ids=None):
     for meal in meals:
         meal_id = meal["id"]
         meal_name = meal["name"]
-        print(f"\n🔹 Processing: {meal_name}\n")
+        print(f"\n Processing: {meal_name}")
 
         # build ingredient strings WITHOUT duplicates
         ingredient_strings = []
@@ -64,16 +64,14 @@ def process_meals(cursor, conn, only_ids=None):
         store_edamam_nutrition(cursor, meal_id, nutrition)
 
         # request grocery pricing
-        for ing in ingredient_strings:
-            item = ing.split(" ",1)[-1]  # use ingredient only, not "2 cups ..."
-            try:
-                products = get_kroger_products(item)
-                if products:
-                    store_kroger_products(item, products[:1], cursor, conn)
-            except Exception as e:
-                print(f"⚠ Skipped {item} → {e}")
-
-
+        for ingredient in meal.get("ingredients", []):
+            ingredient_name = (ingredient.get("ingredient") or "").strip()
+            product_list = get_kroger_products(ingredient_name)
+            print(f"Found {len(product_list)} Kroger products for ingredient {ingredient_name}")
+            if (len(product_list) > 0):
+                # store one product for each ingredient
+                store_kroger_products(ingredient_name, product_list[:1], cursor, conn)
+        print()
 
 # MAIN PROGRAM
 
@@ -92,7 +90,7 @@ def main():
     create_edamam_table(cursor)
 
     # Meals to run (change freely!)
-    MEALS = ["arrabiata"]
+    MEALS = ["arrabiata", "kung pao chicken", "pasta", "cassava", "sushi"]
     added = []
 
     for m in MEALS:
@@ -109,7 +107,7 @@ def main():
 
     #  VISUALIZATIONS
 
-    print("\n📊 Generating graphs...\n")
+    print("\nGenerating graphs...\n")
 
     # Avg calories by meal
     calories_result = calculate_average_calories(cursor)
@@ -124,7 +122,7 @@ def main():
     plot_healthy_score(healthy_scores)
 
 
-    print("\n✨ Complete!")
+    print("\nComplete!")
     conn.close()
 
 
