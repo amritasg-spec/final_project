@@ -11,8 +11,8 @@ def get_mealdb(query, limit=25):
     params = {'s': query}
     response = requests.get(url, params=params)
     response.raise_for_status()
-    print(response.json)
     return response.json()
+
 def process_mealdb_result(data):
     meals = data.get("meals", [])
     result = []
@@ -41,9 +41,8 @@ def process_mealdb_result(data):
 
         result.append(meal_info)
     return result
-def create_meal_tables():
-    conn = sqlite3.connect("final_project.db")
-    cursor = conn.cursor()
+
+def create_meal_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS meals (
             id INTEGER PRIMARY KEY,
@@ -66,8 +65,6 @@ def create_meal_tables():
             FOREIGN KEY (meal_id) REFERENCES meals(id)
         );
     """)  
-    conn.commit()
-    conn.close()  
 
 def store_meal(cursor, meal):
     cursor.execute("""
@@ -94,7 +91,37 @@ def store_meal(cursor, meal):
             ingredient["measure"]
         ))
 
+def get_all_meals(cursor):
+    """
+    Returns a list of meal objects.
+    Each meal object has: id, name, ingredients[].
+    """
+    # Fetch all meals
+    cursor.execute("SELECT id, name FROM meals ORDER BY id;")
+    meal_rows = cursor.fetchall()
 
+    meals = []
+
+    for meal_id, name in meal_rows:
+        # Fetch ingredients for this meal
+        cursor.execute(
+            "SELECT ingredient, measure FROM ingredients WHERE meal_id = ? ORDER BY id;",
+            (meal_id,)
+        )
+        ingredient_rows = cursor.fetchall()
+
+        meal = {
+            "id": meal_id,
+            "name": name,
+            "ingredients": [
+                {"ingredient": ing, "measure": measure}
+                for ing, measure in ingredient_rows
+            ]
+        }
+
+        meals.append(meal)
+
+    return meals
 
 if __name__ == "__main__":
     # 1. Get raw data from API

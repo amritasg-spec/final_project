@@ -28,6 +28,24 @@ def get_edamam_nutrition(ingredient_list):
 
     return response.json()
 
+def create_edamam_table(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS meal_nutrition (
+        meal_id INTEGER PRIMARY KEY,
+        calories REAL,
+        protein REAL,
+        fat REAL,
+        carbs REAL,
+        sugar REAL,
+        fiber REAL,
+        sodium REAL,
+        diet_labels TEXT,
+        health_labels TEXT,
+        cuisineType TEXT,
+        mealType TEXT,
+        dishType TEXT
+        );
+    """)
 
 def store_edamam_nutrition(cursor, meal_id, nutrition_json):
     if nutrition_json is None:
@@ -64,10 +82,18 @@ def store_edamam_nutrition(cursor, meal_id, nutrition_json):
          diet_labels, health_labels, cuisineType, mealType, dishType)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        total_calories, total_protein, total_fat, total_carbs,
+        meal_id, total_calories, total_protein, total_fat, total_carbs,
         total_sugar, total_fiber, total_sodium,
         diet_labels, health_labels, cuisineType, mealType, dishType
     ))
 
+    print(f"total_calories = {total_calories}")
+    print(f"total_protein = {total_protein}")
+    print(f"total_fat = {total_fat}")
+    print(f"total_carbs = {total_carbs}")
+    print(f"total_sugar = {total_sugar}")
+    print(f"total_fiber = {total_fiber}")
+    print(f"total_sodium = {total_sodium}")
     print(f"Stored Edamam totals for meal {meal_id}")
+    print()
 

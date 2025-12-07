@@ -1,7 +1,5 @@
 import base64
 import requests
-import os
-import sqlite3
 
 CLIENT_ID = "groceryfinalproject-bbc9kr33"
 CLIENT_SECRET = "JUn9T6lrU1-dwEc8PMRhatWssGOuZYLAzLqLIaeT"
@@ -26,7 +24,7 @@ def get_access_token():
     response.raise_for_status()
     return response.json()["access_token"]
 
-def get_kroger_products(query):
+def get_kroger_products_json(query):
     token = get_access_token()
 
     url = "https://api.kroger.com/v1/products"
@@ -37,14 +35,15 @@ def get_kroger_products(query):
 
     params = {
         "filter.term": query,
-        "filter.limit": 5
+        "filter.limit": 5,
+        "filter.locationId": "01400376"
     }
 
     response = requests.get(url, headers=headers, params=params)
     response.raise_for_status()
     return response.json()
 
-def process_kroger_result(data):
+def process_kroger_result_json(data):
     products = data.get("data", [])
     result = []
 
@@ -81,28 +80,25 @@ def process_kroger_result(data):
 
     return result
 
-def set_up_database(db_name):
-    """
-    Sets up a SQLite database connection and cursor.
+def create_grocery_table(cur):
+    # Create table if it doesn't exist
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS grocery_products (
+            product_id TEXT PRIMARY KEY,
+            ingredient_name TEXT,
+            brand TEXT,
+            description TEXT,
+            categories TEXT,
+            regular_price REAL,
+            promo_price REAL,
+            stock_level TEXT,
+            fulfillment TEXT
+        );
+    """)
 
-    Parameters
-    -----------------------
-    db_name: str
-        The name of the SQLite database file to create or open.
-
-    Returns
-    -----------------------
-    Tuple (Cursor, Connection):
-        A tuple containing the database cursor and connection objects.
+def store_kroger_products(ingredient_name, products, cur, conn):
     """
-    path = os.path.dirname(os.path.abspath(__file__))
-    conn = sqlite3.connect(path + "/" + db_name)
-    cur = conn.cursor()
-    return cur, conn
-
-def create_kroger_products_table(products, cur, conn):
-    """
-    Creates a Products table and inserts flattened Kroger product data.
+    Inserts flattened Kroger product data into grocery_products table.
 
     Parameters
     -----------------------
@@ -128,20 +124,6 @@ def create_kroger_products_table(products, cur, conn):
     None
     """
 
-    # Create table if it doesn't exist
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS Products (
-            product_id TEXT PRIMARY KEY,
-            brand TEXT,
-            description TEXT,
-            categories TEXT,
-            regular_price REAL,
-            promo_price REAL,
-            stock_level TEXT,
-            fulfillment TEXT
-        );
-    """)
-
     # Insert each product
     for p in products:
         product_id = p.get("productId")
@@ -153,12 +135,20 @@ def create_kroger_products_table(products, cur, conn):
         stock_level = p.get("stockLevel")
         fulfillment = p.get("fulfillment")
 
+        # Check if ingredient already exists
+        cur.execute("SELECT 1 FROM grocery_products WHERE ingredient_name = ? LIMIT 1;", (ingredient_name,))
+        exists = cur.fetchone()
+        if exists:
+            continue
+
+        # Insert only if not exists
         cur.execute("""
-            INSERT OR REPLACE INTO Products
-            (product_id, brand, description, categories, regular_price, promo_price, stock_level, fulfillment)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT OR REPLACE INTO grocery_products
+            (product_id, ingredient_name, brand, description, categories, regular_price, promo_price, stock_level, fulfillment)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             product_id,
+            ingredient_name,
             brand,
             description,
             categories,
@@ -170,13 +160,11 @@ def create_kroger_products_table(products, cur, conn):
 
     conn.commit()
 
+def get_kroger_products(ingredient_name):
+    json = get_kroger_products_json(ingredient_name)
+    return process_kroger_result_json(json)
+
+# for testing independently
 if __name__ == "__main__":
-    result = get_kroger_products("eggs")
-    product_list = process_kroger_result(result)
+    product_list = get_kroger_products("eggs")
     print(product_list)
-
-    # Set up database and insert
-    cur, conn = set_up_database("kroger.db")
-    create_kroger_products_table(product_list, cur, conn)
-    conn.close()
-
