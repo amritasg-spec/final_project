@@ -1,9 +1,10 @@
 import os
 import sqlite3
+import requests
 
 # --- API imports ---
-from edamam_api import get_edamam_nutrition, store_edamam_nutrition, create_edamam_table
-from kroger_api import get_kroger_products, store_kroger_products, create_grocery_table
+from edamam_api import get_edamam_nutrition, store_meal_nutrition, create_edamam_table, create_ingredient_nutrition_table, store_ingredient_nutrition
+from kroger_api import get_kroger_products, store_kroger_products, create_grocery_table, kroger_ingredient_exists
 from mealdb_api import get_mealdb, process_mealdb_result, create_meal_tables, store_meal, get_all_meals
 
 # --- Calculations ---
@@ -35,19 +36,16 @@ def fetch_meal(meal_name, cursor):
 
 # PROCESS NUTRITION + KROGER DATA
 
-def process_meals(cursor, conn, only_ids=None):
+def process_meals(cursor, conn):
 
     meals = get_all_meals(cursor)
 
-    if only_ids:
-        meals = [m for m in meals if m["id"] in only_ids]
-
-    print(f"\nFound {len(meals)} meals")
+    print(f"Found {len(meals)} meals")
 
     for meal in meals:
         meal_id = meal["id"]
         meal_name = meal["name"]
-        print(f"\n Processing: {meal_name}")
+        print(f"\nProcessing: {meal_name}\n")
 
         # build ingredient strings WITHOUT duplicates
         ingredient_strings = []
@@ -60,18 +58,24 @@ def process_meals(cursor, conn, only_ids=None):
                 ingredient_strings.append(item)
 
         # request calories from Edamam
-        nutrition = get_edamam_nutrition(ingredient_strings)
-        store_edamam_nutrition(cursor, meal_id, nutrition)
+        nutrition_json = get_edamam_nutrition(ingredient_strings)
+        store_ingredient_nutrition(cursor, meal_id, nutrition_json)
+        store_meal_nutrition(cursor, meal_id, nutrition_json)
 
         # request grocery pricing
         for ingredient in meal.get("ingredients", []):
             ingredient_name = (ingredient.get("ingredient") or "").strip()
-            product_list = get_kroger_products(ingredient_name)
-            print(f"Found {len(product_list)} Kroger products for ingredient {ingredient_name}")
-            if (len(product_list) > 0):
-                # store one product for each ingredient
-                store_kroger_products(ingredient_name, product_list[:1], cursor, conn)
-        print()
+            if kroger_ingredient_exists(cursor, ingredient_name):
+                print(f"Ingredient {ingredient_name} already exists")
+                continue
+            try:
+                product_list = get_kroger_products(ingredient_name)
+                print(f"Found {len(product_list)} Kroger products for ingredient {ingredient_name}")
+                if (len(product_list) > 0):
+                    # store one product for each ingredient
+                    store_kroger_products(ingredient_name, product_list[:1], cursor, conn)
+            except requests.exceptions.HTTPError:
+                print(f"Skipping {ingredient_name} due to server error")
 
 # MAIN PROGRAM
 
@@ -79,7 +83,7 @@ def main():
     db = "final_project.db"
     if os.path.exists(db):
         os.remove(db)
-        print("\n Old database cleared — fresh run\n")
+        print("Old database cleared — fresh run\n")
 
     conn = sqlite3.connect(db)
     cursor = conn.cursor()
@@ -87,17 +91,15 @@ def main():
     # Create tables if not already existing
     create_grocery_table(cursor)
     create_meal_tables(cursor)
+    create_ingredient_nutrition_table(cursor)
     create_edamam_table(cursor)
 
     # Meals to run (change freely!)
-    MEALS = ["arrabiata", "kung pao chicken", "pasta", "cassava", "sushi"]
-    added = []
-
-    for m in MEALS:
-        ids = fetch_meal(m, cursor)   # RETURN IDs HERE IF YOU WANT
-        added.extend(ids)
-
-    process_meals(cursor, conn, added)  
+    MEALS = ["arrabiata", "kung pao chicken", "pasta", "cassava", "sushi",
+             "brioche", "eggplant adobo", "duck confit", "banana pancakes",
+             "kofta burger", "drunken noodles", "coq au vin", "nasi lemak",
+             "irish stew", "moussaka", "cassava pizza", "risotto", "enchilada",
+             "french onion soup", "carrot cake"]
 
     for m in MEALS:
         fetch_meal(m, cursor)

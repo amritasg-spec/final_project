@@ -47,7 +47,62 @@ def create_edamam_table(cursor):
         );
     """)
 
-def store_edamam_nutrition(cursor, meal_id, nutrition_json):
+def create_ingredient_nutrition_table(cursor):
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ingredient_nutrition (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            meal_id INTEGER,
+            ingredient TEXT,
+            calories REAL,
+            protein REAL,
+            fat REAL,
+            carbs REAL,
+            sugar REAL,
+            fiber REAL,
+            sodium REAL
+        );
+    """)
+
+def store_ingredient_nutrition(cursor, meal_id, nutrition_json):
+    if nutrition_json is None:
+        return
+
+    # Edamam returns one entry in "ingredients" per string we sent in "ingr"
+    for ing in nutrition_json.get("ingredients", []):
+        ingredient_text = (ing.get("text") or "").strip()
+
+        parsed_list = ing.get("parsed", [])
+        if not parsed_list:
+            continue
+
+        parsed = parsed_list[0]  # take primary match
+        nutrients = parsed.get("nutrients", {})
+
+        calories = nutrients.get("ENERC_KCAL", {}).get("quantity", 0)
+        protein  = nutrients.get("PROCNT", {}).get("quantity", 0)
+        fat      = nutrients.get("FAT", {}).get("quantity", 0)
+        carbs    = nutrients.get("CHOCDF", {}).get("quantity", 0)
+        sugar    = nutrients.get("SUGAR", {}).get("quantity", 0)
+        fiber    = nutrients.get("FIBTG", {}).get("quantity", 0)
+        sodium   = nutrients.get("NA", {}).get("quantity", 0)
+
+        cursor.execute("""
+            INSERT INTO ingredient_nutrition
+            (meal_id, ingredient, calories, protein, fat, carbs, sugar, fiber, sodium)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            meal_id,
+            ingredient_text,  # e.g. "1 cup rice"
+            calories,
+            protein,
+            fat,
+            carbs,
+            sugar,
+            fiber,
+            sodium
+        ))
+
+def store_meal_nutrition(cursor, meal_id, nutrition_json):
     if nutrition_json is None:
         return
     total_calories = 0

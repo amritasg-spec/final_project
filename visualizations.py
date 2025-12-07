@@ -1,78 +1,79 @@
 import matplotlib.pyplot as plt
 
-#1
+# 1. Average Calories Plot
 def plot_average_calories(calorie_dict):
-    """
-    Input example → {"Vegetarian":2200, "Chicken":1900, "Seafood":2500}
-    """
-
     categories = list(calorie_dict.keys())
     values = list(calorie_dict.values())
 
-    plt.figure(figsize=(8,4))
-    bars = plt.bar(categories, values)
+    fig, ax = plt.subplots(figsize=(10, 4))
+
+    bars = ax.bar(categories, values)
 
     # color variation for creativity
     for i, bar in enumerate(bars):
         bar.set_color(plt.cm.viridis(i / len(bars)))
 
-    plt.title("Average Calories by Meal Category", fontsize=14, weight="bold")
-    plt.ylabel("Calories")
-    plt.grid(axis="y", linestyle="--", alpha=0.5)
+    ax.set_title("Average Calories by Meal Category", fontsize=16, weight="bold")
+    ax.set_ylabel("Calories")
+    ax.grid(axis="y", linestyle="--", alpha=0.4)
+
+    # rotate category labels if needed
+    ax.set_xticklabels(categories, rotation=30, ha="right", fontsize=9)
+
     plt.tight_layout()
     plt.show()
 
-
-
-#2
+# 2. Estimated Grocery Cost Plot
 def plot_recipe_cost(cost_dict):
-    """
-    Input example → {52771: 36.44, 52833: 27.10, 52945: 64.38}
-    """
-
-    ids   = list(cost_dict.keys())
+    ids    = list(cost_dict.keys())
     prices = list(cost_dict.values())
-
-    # convert to labels like "Meal 1", "Meal 2"
     labels = [f"Meal {i+1}" for i in range(len(ids))]
 
-    plt.figure(figsize=(8,4))
-    bars = plt.bar(labels, prices, color="lightcoral")
+    fig, ax = plt.subplots(figsize=(12, 4))
 
-    plt.title("Estimated Grocery Cost Per Recipe", fontsize=14, weight="bold")
-    plt.ylabel("Estimated Cost ($)")
-    plt.grid(axis="y", alpha=0.4)
+    bars = ax.bar(labels, prices, color="lightcoral")
 
-    # label bars with values
+    ax.set_title("Estimated Grocery Cost Per Recipe", fontsize=16, weight="bold")
+    ax.set_ylabel("Estimated Cost ($)")
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+
+    # Improve X label readability
+    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+
+    # Label each bar
     for i, price in enumerate(prices):
-        plt.text(i, price+0.5, f"${price:.2f}", ha="center")
+        ax.text(i, price + (max(prices) * 0.03), f"${price:.2f}",
+                ha="center", fontsize=8)
+
+    # Prevent labels touching the top
+    ax.set_ylim(0, max(prices) * 1.15)
 
     plt.tight_layout()
     plt.show()
 
-
-
-#3
+# 3. Healthy Score Plot
 def plot_healthy_score(score_dict):
-    """
-    Input example → {52771: 6.5, 52777: 4.5, 52945: 8.0}
-    """
-
-    ids = list(score_dict.keys())
+    ids    = list(score_dict.keys())
     scores = list(score_dict.values())
-
     labels = [f"Meal {i+1}" for i in range(len(ids))]
 
-    plt.figure(figsize=(8,4))
-    bars = plt.bar(labels, scores, color="mediumseagreen")
+    fig, ax = plt.subplots(figsize=(12, 4))
 
-    plt.title("Healthy & Available Recipe Score", fontsize=14, weight="bold")
-    plt.ylabel("Score (Higher = Healthier + More Available)")
-    plt.grid(axis="y", linestyle="--", alpha=0.4)
+    bars = ax.bar(labels, scores, color="mediumseagreen")
+
+    ax.set_title("Healthy & Available Recipe Score", fontsize=16, weight="bold")
+    ax.set_ylabel("Score (Higher = Healthier + More Available)")
+    ax.grid(axis="y", linestyle="--", alpha=0.3)
+
+    # Improve X label readability
+    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
 
     # annotate values on top
     for i, score in enumerate(scores):
-        plt.text(i, score+0.3, f"{score:.1f}", ha="center")
+        ax.text(i, score + 0.05, f"{score:.1f}",
+                ha="center", fontsize=8)
+
+    ax.set_ylim(0, max(scores) * 1.15)
 
     plt.tight_layout()
     plt.show()
