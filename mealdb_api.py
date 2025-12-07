@@ -14,7 +14,11 @@ def get_mealdb(query, limit=25):
     return response.json()
 
 def process_mealdb_result(data):
-    meals = data.get("meals", [])
+    # No results for this term → skip
+    if not data or data.get("meals") is None:
+        return []
+
+    meals = data["meals"]
     result = []
 
     for meal in meals:
@@ -35,11 +39,22 @@ def process_mealdb_result(data):
             measure = meal.get(f"strMeasure{i}")
             if ingredient and ingredient.strip():
                 meal_info["ingredients"].append({
-                    "ingredient": ingredient,
-                    "measure": measure
+                    "ingredient": ingredient.strip(),
+                    "measure": (measure or "").strip()
                 })
 
+        #goddamn duplicate ingredients bruh im gonna crash out 
+        seen = set()
+        unique = []
+        for ing in meal_info["ingredients"]:
+            key = ing["ingredient"].lower()
+            if key not in seen:
+                seen.add(key)
+                unique.append(ing)
+        meal_info["ingredients"] = unique
+
         result.append(meal_info)
+
     return result
 
 def create_meal_tables(cursor):
