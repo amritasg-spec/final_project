@@ -63,7 +63,7 @@ def main():
 
     # remove existing database as we will re-create it
     if os.path.exists(db_path):
-        os.remove(db_path)
+        print("Database already exists, using existing file.") 
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -74,9 +74,13 @@ def main():
     create_edamam_table(cursor)
 
     # add meals to the database
-    fetch_meal("arrabiata", cursor,)
+    # fetch_meal("arrabiata", cursor,)
+    # fetch_meal("pasta", cursor)
+    # fetch_meal("kung pao chicken", cursor)
+    fetch_meal("chicken", cursor)
+    fetch_meal("beef", cursor)
     fetch_meal("pasta", cursor)
-    fetch_meal("kung pao chicken", cursor)
+    fetch_meal("vegetarian", cursor)
 
     # process meals
     process_meals(cursor, conn)
