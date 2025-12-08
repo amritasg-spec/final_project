@@ -140,7 +140,7 @@ def get_all_meals(cursor):
 
 if __name__ == "__main__":
     # 1. Get raw data from API
-    raw = get_mealdb("chicken")
+    raw = get_mealdb("fish")
     print("Raw API response loaded.")
 
     # 2. Process the data into cleaned JSON objects
