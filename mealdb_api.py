@@ -149,7 +149,7 @@ if __name__ == "__main__":
 
     conn = sqlite3.connect("final_project.db")
     cursor = conn.cursor()
-    create_meal_tables()
+    create_meal_tables(cursor)
     for meal in meals:
         store_meal(cursor, meal)
     conn.commit()
