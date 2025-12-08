@@ -74,3 +74,4 @@ if __name__ == "__main__":
         f.write("\nHealthy + Available Scores per Meal:\n")
         for meal_id, score in healthy_scores.items():
             f.write(f"Meal ID {meal_id}: Healthy + Available Score = {score}/10\n")
+    conn.close()
