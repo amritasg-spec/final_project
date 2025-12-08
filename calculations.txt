@@ -1,0 +1,123 @@
+Average Calories per Meal Category:
+Average calories for Beef: 10036.73 kcal
+Average calories for Chicken: 2602.56 kcal
+Average calories for Seafood: 2595.53 kcal
+Average calories for Vegetarian: 2208.93 kcal
+
+Estimated Grocery Cost per Recipe:
+Meal ID 52765: $19.47
+Meal ID 52771: $41.42
+Meal ID 52777: $124.26
+Meal ID 52781: $66.43
+Meal ID 52795: $0.00
+Meal ID 52796: $20.61
+Meal ID 52797: $9.99
+Meal ID 52802: $0.00
+Meal ID 52806: $0.00
+Meal ID 52809: $0.00
+Meal ID 52813: $18.72
+Meal ID 52819: $0.99
+Meal ID 52820: $13.44
+Meal ID 52823: $5.88
+Meal ID 52831: $0.00
+Meal ID 52832: $0.00
+Meal ID 52841: $2.49
+Meal ID 52842: $0.00
+Meal ID 52850: $0.00
+Meal ID 52851: $0.00
+Meal ID 52855: $0.00
+Meal ID 52875: $0.00
+Meal ID 52879: $7.47
+Meal ID 52882: $0.00
+Meal ID 52897: $2.49
+Meal ID 52903: $0.00
+Meal ID 52907: $0.00
+Meal ID 52913: $0.00
+Meal ID 52918: $0.00
+Meal ID 52920: $0.00
+Meal ID 52925: $2.49
+Meal ID 52934: $0.00
+Meal ID 52936: $0.00
+Meal ID 52937: $0.00
+Meal ID 52940: $7.47
+Meal ID 52941: $2.49
+Meal ID 52944: $2.49
+Meal ID 52945: $0.00
+Meal ID 52951: $0.00
+Meal ID 52954: $0.00
+Meal ID 52955: $0.00
+Meal ID 52956: $0.00
+Meal ID 52960: $0.00
+Meal ID 52972: $0.00
+Meal ID 52973: $0.00
+Meal ID 52981: $2.49
+Meal ID 53006: $0.00
+Meal ID 53011: $0.00
+Meal ID 53020: $2.49
+Meal ID 53033: $0.00
+Meal ID 53043: $0.00
+Meal ID 53045: $0.00
+Meal ID 53047: $2.49
+Meal ID 53051: $0.00
+Meal ID 53059: $0.00
+Meal ID 53065: $0.00
+Meal ID 53073: $0.00
+Meal ID 53077: $2.49
+Meal ID 53078: $0.00
+Meal ID 53079: $4.98
+Meal ID 53081: $2.49
+Meal ID 53095: $0.00
+Meal ID 53102: $0.00
+Meal ID 53106: $0.00
+Meal ID 53110: $0.00
+Meal ID 53122: $4.98
+Meal ID 53143: $9.87
+Meal ID 53155: $9.87
+Meal ID 53156: $0.00
+Meal ID 53157: $0.00
+Meal ID 53161: $0.00
+Meal ID 53164: $0.00
+Meal ID 53167: $0.00
+Meal ID 53168: $0.00
+Meal ID 53182: $0.00
+Meal ID 53184: $0.00
+Meal ID 53185: $0.00
+Meal ID 53193: $0.00
+Meal ID 53194: $0.00
+Meal ID 53195: $0.00
+Meal ID 53196: $0.00
+Meal ID 53198: $0.00
+Meal ID 53202: $0.00
+Meal ID 53203: $0.00
+Meal ID 53204: $0.00
+Meal ID 53210: $0.00
+Meal ID 53213: $0.00
+Meal ID 53214: $0.00
+Meal ID 53227: $2.49
+Meal ID 53229: $2.49
+Meal ID 53232: $9.96
+Meal ID 53234: $0.00
+Meal ID 53237: $0.00
+Meal ID 53239: $0.00
+Meal ID 53244: $0.00
+Meal ID 53245: $0.00
+Meal ID 53246: $2.49
+Meal ID 53252: $0.00
+Meal ID 53257: $0.00
+Meal ID 53264: $0.00
+Meal ID 53267: $0.00
+Meal ID 53275: $0.00
+Meal ID 53288: $0.00
+Meal ID 53289: $2.49
+Meal ID 53297: $0.00
+Meal ID 53309: $0.00
+Meal ID 53330: $6.58
+Meal ID 53352: $0.00
+Meal ID 53357: $0.00
+Meal ID 53358: $0.00
+
+Healthy + Available Scores per Meal:
+Meal ID 52765: Healthy + Available Score = 4.01/10
+Meal ID 52771: Healthy + Available Score = 5.37/10
+Meal ID 52777: Healthy + Available Score = 5.19/10
+Meal ID 52781: Healthy + Available Score = 6.25/10
