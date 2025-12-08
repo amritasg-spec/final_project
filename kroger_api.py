@@ -96,6 +96,17 @@ def create_grocery_table(cur):
         );
     """)
 
+def kroger_ingredient_exists(cur, ingredient_name):
+    """
+    Returns True if there is already at least one row
+    for the given ingredient_name in grocery_products.
+    """
+    cur.execute(
+        "SELECT 1 FROM grocery_products WHERE ingredient_name = ? LIMIT 1;",
+        (ingredient_name,)
+    )
+    return cur.fetchone() is not None
+
 def store_kroger_products(ingredient_name, products, cur, conn):
     """
     Inserts flattened Kroger product data into grocery_products table.
