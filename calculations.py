@@ -58,6 +58,19 @@ if __name__ == "__main__":
     cursor = conn.cursor()
 
     avg_calories = calculate_average_calories(cursor)
-    for category, cal in avg_calories.items():
-        print(f"{category}: {cal:.2f} kcal")
-    conn.close()
+    with open("calculations.txt", "w") as f:
+        f.write("Average Calories per Meal Category:\n")
+        for category, cal in avg_calories.items():
+            f.write(f"Average calories for {category}: {cal:.2f} kcal\n")
+
+    recipe_costs = calculate_recipe_cost(cursor)
+    with open("calculations.txt", "a") as f:
+        f.write("\nEstimated Grocery Cost per Recipe:\n")  
+        for meal_id, cost in recipe_costs.items():
+            f.write(f"Meal ID {meal_id}: ${cost:.2f}\n")
+    
+    healthy_scores = calculate_healthy_available_score(cursor)
+    with open("calculations.txt", "a") as f:
+        f.write("\nHealthy + Available Scores per Meal:\n")
+        for meal_id, score in healthy_scores.items():
+            f.write(f"Meal ID {meal_id}: Healthy + Available Score = {score}/10\n")
