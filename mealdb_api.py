@@ -81,6 +81,33 @@ def create_meal_tables(cursor):
         );
     """)  
 
+    # table for tracking our progress
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS progress_tracking (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            search_phrase TEXT UNIQUE
+        )
+    """)
+
+def search_phrase_exists(cur, search_phrase):
+    """
+    Progress tracking: Returns True if the search_phrase is already complete.
+    """
+    cur.execute(
+        "SELECT 1 FROM progress_tracking WHERE search_phrase = ? LIMIT 1;",
+        (search_phrase,)
+    )
+    return cur.fetchone() is not None
+
+def add_search_phrase(cur, search_phrase):
+    """
+    Progress tracking: Sets search_phrase as already complete by inserting it into the progress_tracking table.
+    """
+    cur.execute(
+        "INSERT OR IGNORE INTO progress_tracking (search_phrase) VALUES (?);",
+        (search_phrase,)
+    )
+
 def store_meal(cursor, meal):
     cursor.execute("""
         INSERT OR REPLACE INTO meals (id, name, category, area, instructions, thumbnail, tags, youtube)
@@ -106,13 +133,16 @@ def store_meal(cursor, meal):
             ingredient["measure"]
         ))
 
-def get_all_meals(cursor):
+def get_meals_by_ids(cursor, meal_ids):
     """
     Returns a list of meal objects.
     Each meal object has: id, name, ingredients[].
     """
-    # Fetch all meals
-    cursor.execute("SELECT id, name FROM meals ORDER BY id;")
+    if not meal_ids:
+        return []
+
+    placeholders = ",".join("?" * len(meal_ids))
+    cursor.execute(f"SELECT id, name FROM meals WHERE id IN ({placeholders}) ORDER BY id;", meal_ids)
     meal_rows = cursor.fetchall()
 
     meals = []

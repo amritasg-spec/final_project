@@ -5,7 +5,7 @@ import requests
 # --- API imports ---
 from edamam_api import get_edamam_nutrition, store_meal_nutrition, create_edamam_table, create_ingredient_nutrition_table, store_ingredient_nutrition
 from kroger_api import get_kroger_products, store_kroger_products, create_grocery_table, kroger_ingredient_exists
-from mealdb_api import get_mealdb, process_mealdb_result, create_meal_tables, store_meal, get_all_meals
+from mealdb_api import get_mealdb, process_mealdb_result, create_meal_tables, store_meal, get_meals_by_ids, search_phrase_exists, add_search_phrase
 
 # --- Calculations ---
 from calculations import calculate_average_calories, calculate_recipe_cost, calculate_healthy_available_score
@@ -21,8 +21,8 @@ from visualizations import (
 
 # FETCH FROM MEALDB & STORE IN DATABASE
 
-def fetch_meal(meal_name, cursor):
-    meals_raw = get_mealdb(meal_name)
+def fetch_meal(search_phrase, cursor):
+    meals_raw = get_mealdb(search_phrase)
     meals = process_mealdb_result(meals_raw)
 
     meal_ids = []   # <- collect IDs
@@ -36,11 +36,11 @@ def fetch_meal(meal_name, cursor):
 
 # PROCESS NUTRITION + KROGER DATA
 
-def process_meals(cursor, conn):
+def process_meals(cursor, conn, meal_ids):
 
-    meals = get_all_meals(cursor)
+    meals = get_meals_by_ids(cursor, meal_ids)
 
-    print(f"Found {len(meals)} meals")
+    print(f"Processing {len(meals)} meals")
 
     for meal in meals:
         meal_id = meal["id"]
@@ -77,38 +77,7 @@ def process_meals(cursor, conn):
             except requests.exceptions.HTTPError:
                 print(f"Skipping {ingredient_name} due to server error")
 
-# MAIN PROGRAM
-
-def main():
-    db = "final_project.db"
-    if os.path.exists(db):
-        os.remove(db)
-        print("Old database cleared — fresh run\n")
-
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-
-    # Create tables if not already existing
-    create_grocery_table(cursor)
-    create_meal_tables(cursor)
-    create_ingredient_nutrition_table(cursor)
-    create_edamam_table(cursor)
-
-    # Be careful: Using a general word like "chicken" will result in too many meals getting returned.
-    MEALS =  ["arrabiata", "kung pao chicken", "pasta", "cassava", "sushi",
-              "brioche", "eggplant adobo", "duck confit", "banana pancakes",
-              "kofta burger", "drunken noodles", "coq au vin", "nasi lemak",
-              "irish stew", "moussaka", "cassava pizza", "risotto", "enchilada",
-              "french onion soup", "carrot cake"]
-
-    for m in MEALS:
-        fetch_meal(m, cursor)
-
-    process_meals(cursor, conn)
-    conn.commit()
-
-    #  VISUALIZATIONS
-
+def show_visualizatons(cursor):
     print("\nGenerating graphs...\n")
 
     # Avg calories by meal
@@ -123,10 +92,48 @@ def main():
     healthy_scores = calculate_healthy_available_score(cursor)
     plot_healthy_score(healthy_scores)
 
+# MAIN PROGRAM
 
-    print("\nComplete!")
+def main():
+    db = "final_project.db"
+
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+
+    # Create tables if not already existing
+    create_grocery_table(cursor)
+    create_meal_tables(cursor)
+    create_ingredient_nutrition_table(cursor)
+    create_edamam_table(cursor)
+
+    # Be careful: Using a general word like "chicken" will result in too many meals getting returned.
+    all_search_phrases =  [
+        "arrabiata", "kung pao chicken", "pasta", "cassava", "sushi",
+        "brioche", "eggplant adobo", "duck confit", "banana pancakes",
+        "kofta burger", "drunken noodles", "coq au vin", "nasi lemak",
+        "irish stew", "moussaka", "cassava pizza", "risotto", "enchilada",
+        "french onion soup", "carrot cake"
+    ]
+
+    remaining_search_phrases = []
+    for search_phrase in all_search_phrases:
+        if not search_phrase_exists(cursor, search_phrase):
+            remaining_search_phrases.append(search_phrase)
+
+    if len(remaining_search_phrases) != 0:
+        search_phrase = remaining_search_phrases[0]
+        meal_ids = fetch_meal(search_phrase, cursor)
+        add_search_phrase(cursor, search_phrase)
+        process_meals(cursor, conn, meal_ids)
+        completed = len(all_search_phrases) - len(remaining_search_phrases)
+        print(f"\n{completed + 1} of {len(all_search_phrases)} complete. Please run again.")
+        conn.commit()
+    else:
+        conn.commit()
+        show_visualizatons(cursor)
+        print("\nAll done!")
+
     conn.close()
-
 
 if __name__ == "__main__":
     main()
