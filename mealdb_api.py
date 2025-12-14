@@ -1,10 +1,50 @@
-import base64
 import requests
-import os
 import sqlite3
 
 APP_KEY = '1'
 BASE_URL = f'https://www.themealdb.com/api/json/v1/{APP_KEY}/'
+
+# Look up this list to convert string tags to integer and vice versa
+tags = [
+    "Unknown",
+    "Baking",
+    "Breakfast",
+    "Casserole",
+    "Cheasy",
+    "Curry",
+    "Desert",
+    "Fish",
+    "Meat",
+    "Pasta",
+    "SideDish",
+    "Stew",
+    "Sweet",
+    "Treat",
+]
+
+def encode_tags(input_tags):
+    """
+    Convert a list of tags into integer IDs.
+    Unknown categories map to index 0 ("Unknown").
+    Duplicates are removed and the final list is sorted by ID.
+    """
+    if input_tags is None:
+        return []
+
+    # Build lookup table from the global master list
+    mapping = {tag: i for i, tag in enumerate(tags)}
+
+    unique_ids = set()
+
+    tag_list = input_tags.split(",")
+    for tag in tag_list:
+        if tag in mapping:
+            unique_ids.add(mapping[tag])
+        else:
+            print(f"[encode_tags] Warning: tag '{tag}' not found. Using ID 0.")
+            unique_ids.add(0)
+
+    return sorted(unique_ids)
 
 def get_mealdb(query, limit=25):
     url = BASE_URL + 'search.php'
@@ -22,6 +62,10 @@ def process_mealdb_result(data):
     result = []
 
     for meal in meals:
+        # Convert tags into a comma-separated list of IDs
+        encoded_tags = encode_tags(meal.get("strTags", []))
+        tags = ", ".join(str(n) for n in encoded_tags)
+
         meal_info = {
             "id": meal.get("idMeal"),
             "name": meal.get("strMeal"),
@@ -29,7 +73,7 @@ def process_mealdb_result(data):
             "area": meal.get("strArea"),
             "instructions": meal.get("strInstructions"),
             "thumbnail": meal.get("strMealThumb"),
-            "tags": meal.get("strTags"),
+            "tags": tags,
             "youtube": meal.get("strYoutube"),
             "ingredients": []
         }
@@ -58,6 +102,7 @@ def process_mealdb_result(data):
     return result
 
 def create_meal_tables(cursor):
+    # table for storing meals
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS meals (
             id INTEGER PRIMARY KEY,
@@ -71,6 +116,7 @@ def create_meal_tables(cursor):
         );
     """)
 
+    # table for storing the measure of each ingredient needed for each meal
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ingredients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,7 +181,7 @@ def store_meal(cursor, meal):
 
 def get_meals_by_ids(cursor, meal_ids):
     """
-    Returns a list of meal objects.
+    Returns a list of meal objects for each supplied id.
     Each meal object has: id, name, ingredients[].
     """
     if not meal_ids:

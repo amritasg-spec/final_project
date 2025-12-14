@@ -1,4 +1,7 @@
+import sqlite3
 import matplotlib.pyplot as plt
+
+from calculations import calculate_average_calories, calculate_recipe_cost, calculate_healthy_available_score
 
 # 1. Average Calories Plot
 def plot_average_calories(calorie_dict):
@@ -75,3 +78,25 @@ def plot_healthy_score(score_dict):
 
     plt.tight_layout()
     plt.show()
+
+def show_visualizations(cursor):
+    print("\nGenerating graphs...\n")
+
+    # Avg calories by meal
+    calories_result = calculate_average_calories(cursor)
+    plot_average_calories(calories_result)
+
+    # Ingredient cost visualization
+    recipe_cost = calculate_recipe_cost(cursor)
+    plot_recipe_cost(recipe_cost)
+
+    # Healthy availability index graph
+    healthy_scores = calculate_healthy_available_score(cursor)
+    plot_healthy_score(healthy_scores)
+
+if __name__ == "__main__":
+    db = "final_project.db"
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+    show_visualizations(cursor)
+    conn.close()
