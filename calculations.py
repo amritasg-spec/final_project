@@ -16,12 +16,14 @@ def calculate_average_calories(cursor):
 #calculation 2: estimated grocery cost per recipe 
 def calculate_recipe_cost(cursor):
     cursor.execute("""
-        SELECT ingredients.meal_id,
-               SUM(COALESCE(grocery_products.regular_price, 0))
+        SELECT meals.name,
+            SUM(COALESCE(grocery_products.regular_price, 0))
         FROM ingredients
         LEFT JOIN grocery_products
             ON ingredients.ingredient = grocery_products.ingredient_name
-        GROUP BY ingredients.meal_id;
+        JOIN meals
+            ON ingredients.meal_id = meals.id
+        GROUP BY meals.id, meals.name;
     """)
 
     results = cursor.fetchall()
@@ -30,8 +32,10 @@ def calculate_recipe_cost(cursor):
 #calculation 3: healthy + availible score (idk what this means)
 def calculate_healthy_available_score(cursor):
     cursor.execute("""
-        SELECT meal_id, calories, protein, fat, carbs, sugar, fiber, sodium
+        SELECT meals.name, calories, protein, fat, carbs, sugar, fiber, sodium
         FROM meal_nutrition
+        JOIN meals
+            ON meal_nutrition.meal_id = meals.id
     """)
 
     results = cursor.fetchall()

@@ -18,16 +18,15 @@ def plot_average_calories(calorie_dict):
     ax.grid(axis="y", linestyle="--", alpha=0.4)
 
     # rotate category labels if needed
-    ax.set_xticklabels(categories, rotation=30, ha="right", fontsize=9)
+    ax.set_xticks(range(len(categories)), labels=categories, rotation=30, ha="right", fontsize=9)
 
     plt.tight_layout()
     plt.show()
 
 # 2. Estimated Grocery Cost Plot
 def plot_recipe_cost(cost_dict):
-    ids    = list(cost_dict.keys())
+    labels = list(cost_dict.keys())
     prices = list(cost_dict.values())
-    labels = [f"Meal {i+1}" for i in range(len(ids))]
 
     fig, ax = plt.subplots(figsize=(12, 4))
 
@@ -38,7 +37,7 @@ def plot_recipe_cost(cost_dict):
     ax.grid(axis="y", linestyle="--", alpha=0.3)
 
     # Improve X label readability
-    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+    ax.set_xticks(range(len(labels)), labels=labels, rotation=45, ha="right", fontsize=8)
 
     # Label each bar
     for i, price in enumerate(prices):
@@ -53,9 +52,8 @@ def plot_recipe_cost(cost_dict):
 
 # 3. Healthy Score Plot
 def plot_healthy_score(score_dict):
-    ids    = list(score_dict.keys())
+    labels = list(score_dict.keys())
     scores = list(score_dict.values())
-    labels = [f"Meal {i+1}" for i in range(len(ids))]
 
     fig, ax = plt.subplots(figsize=(12, 4))
 
@@ -66,7 +64,7 @@ def plot_healthy_score(score_dict):
     ax.grid(axis="y", linestyle="--", alpha=0.3)
 
     # Improve X label readability
-    ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=8)
+    ax.set_xticks(range(len(labels)), labels=labels, rotation=45, ha="right", fontsize=8)
 
     # annotate values on top
     for i, score in enumerate(scores):

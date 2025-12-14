@@ -94,9 +94,12 @@ def main():
     create_ingredient_nutrition_table(cursor)
     create_edamam_table(cursor)
 
-    # Meals to run (change freely!)
-    MEALS = ["chicken", "beef", "pork", "fish", "rice",
-        "pasta", "soup", "salad", "dessert", "cake"]
+    # Be careful: Using a general word like "chicken" will result in too many meals getting returned.
+    MEALS =  ["arrabiata", "kung pao chicken", "pasta", "cassava", "sushi",
+              "brioche", "eggplant adobo", "duck confit", "banana pancakes",
+              "kofta burger", "drunken noodles", "coq au vin", "nasi lemak",
+              "irish stew", "moussaka", "cassava pizza", "risotto", "enchilada",
+              "french onion soup", "carrot cake"]
 
     for m in MEALS:
         fetch_meal(m, cursor)

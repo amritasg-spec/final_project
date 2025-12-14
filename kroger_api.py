@@ -4,6 +4,76 @@ import requests
 CLIENT_ID = "groceryfinalproject-bbc9kr33"
 CLIENT_SECRET = "JUn9T6lrU1-dwEc8PMRhatWssGOuZYLAzLqLIaeT"
 
+# Look up this list to convert string category names to integer and vice versa
+categories = [
+    "Unknown",
+    "Adult Beverage",
+    "Bakery",
+    "Baking Goods",
+    "Beverages",
+    "Breakfast",
+    "Canned & Packaged",
+    "Cleaning Products",
+    "Condiment & Sauces",
+    "Dairy",
+    "Deli",
+    "Frozen",
+    "International",
+    "Kitchen",
+    "Meat & Seafood",
+    "Natural & Organic",
+    "Pasta, Sauces, Grain",
+    "Produce",
+    "Snacks",
+]
+
+def encode_categories(input_categories):
+    """
+    Convert a list of category strings into integer IDs.
+    Unknown categories map to index 0 ("Unknown").
+    Duplicates are removed and the final list is sorted by ID.
+    """
+    # Build lookup table from the global master list
+    mapping = {cat: i for i, cat in enumerate(categories)}
+
+    unique_ids = set()
+
+    for cat in input_categories:
+        if cat in mapping:
+            unique_ids.add(mapping[cat])
+        else:
+            print(f"[encode_categories] Warning: category '{cat}' not found. Using ID 0.")
+            unique_ids.add(0)
+
+    return sorted(unique_ids)
+
+# Look up this list to convert string fulfillments to integer and vice versa
+fulfillment_types = [
+    "unknown",
+    "curbside",
+    "delivery",
+    "inStore",
+    "shipToHome"
+]
+
+def encode_fulfillments(input_fulfillments):
+    """
+    Convert a dict of fulfillment flags into integer IDs.
+    Only fulfillments with truthy values are included.
+    Unknown fulfillments map to index 0 ("unknown").
+    Duplicates are removed and the final list is sorted by ID.
+    """
+    mapping = {ful: i for i, ful in enumerate(fulfillment_types)}
+    unique_ids = set()
+    for ful, enabled in input_fulfillments.items():
+        if enabled:
+            if ful in mapping:
+                unique_ids.add(mapping[ful])
+            else:
+                print(f"[encode_fulfillments] Warning: fulfillment '{ful}' not found. Using ID 0.")
+                unique_ids.add(0)
+    return sorted(unique_ids)
+
 def get_access_token():
     token_url = "https://api.kroger.com/v1/connect/oauth2/token"
     
@@ -50,8 +120,9 @@ def process_kroger_result_json(data):
     for p in products:
         item = p["items"][0]  # Assumption: every product has one item
 
-        # Convert categories into a comma-separated list
-        categories = ", ".join(p.get("categories", []))
+        # Convert categories into a comma-separated list of IDs
+        encoded_categories = encode_categories(p.get("categories", []))
+        categories = ", ".join(str(n) for n in encoded_categories)
 
         # Price fields
         price_obj = item.get("price", {})
@@ -63,12 +134,11 @@ def process_kroger_result_json(data):
 
         # Fulfillment: make comma-separated list of properties that are True
         fulfillment = item.get("fulfillment", {})
-        fulfillment_str = ", ".join(
-            key for key, val in fulfillment.items() if val
-        )
+        encoded_fulfillments = encode_fulfillments(fulfillment)
+        fulfillment_str = ", ".join(str(n) for n in encoded_fulfillments)
 
         result.append({
-            "productId": p.get("productId"),
+            "productId": int(p.get("productId")),
             "brand": p.get("brand"),
             "description": p.get("description"),
             "categories": categories,
@@ -84,7 +154,7 @@ def create_grocery_table(cur):
     # Create table if it doesn't exist
     cur.execute("""
         CREATE TABLE IF NOT EXISTS grocery_products (
-            product_id TEXT PRIMARY KEY,
+            product_id INTEGER PRIMARY KEY,
             ingredient_name TEXT,
             brand TEXT,
             description TEXT,
