@@ -52,7 +52,7 @@ def create_ingredient_nutrition_table(cursor):
         CREATE TABLE IF NOT EXISTS ingredient_nutrition (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             meal_id INTEGER,
-            ingredient TEXT,
+            ingredient TEXT NOT NULL COLLATE NOCASE UNIQUE,
             calories REAL,
             protein REAL,
             fat REAL,
@@ -87,7 +87,7 @@ def store_ingredient_nutrition(cursor, meal_id, nutrition_json):
         sodium   = nutrients.get("NA", {}).get("quantity", 0)
 
         cursor.execute("""
-            INSERT INTO ingredient_nutrition
+            INSERT OR IGNORE INTO ingredient_nutrition
             (meal_id, ingredient, calories, protein, fat, carbs, sugar, fiber, sodium)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (

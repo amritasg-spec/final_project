@@ -69,7 +69,7 @@ def create_grocery_table(cur):
     cur.execute("""
         CREATE TABLE IF NOT EXISTS grocery_products (
             product_id INTEGER PRIMARY KEY,
-            ingredient_name TEXT,
+            ingredient_name TEXT COLLATE NOCASE,
             description TEXT,
             regular_price REAL,
             promo_price REAL
