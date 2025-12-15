@@ -58,7 +58,7 @@ def create_meal_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS meal_categories (
             id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE
+            name TEXT NOT NULL COLLATE NOCASE UNIQUE
         );
     """)
 
@@ -79,7 +79,7 @@ def create_meal_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ingredients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE
+            name TEXT NOT NULL COLLATE NOCASE UNIQUE
         );
     """)
 
@@ -87,7 +87,7 @@ def create_meal_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS measures (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL UNIQUE
+            name TEXT NOT NULL COLLATE NOCASE UNIQUE
         );
     """)
 
@@ -108,7 +108,7 @@ def create_meal_tables(cursor):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS progress_tracking (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            search_phrase TEXT UNIQUE
+            search_phrase TEXT NOT NULL COLLATE NOCASE UNIQUE
         )
     """)
 
