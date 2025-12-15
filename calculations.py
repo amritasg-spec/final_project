@@ -4,12 +4,12 @@ import sqlite3
 #calculation 1: average calories per meal
 def calculate_average_calories(cursor): 
     cursor.execute("""
-        SELECT meals.category, AVG(meal_nutrition.calories)
+        SELECT meal_categories.name, AVG(meal_nutrition.calories)
         FROM meal_nutrition
         JOIN meals ON meals.id = meal_nutrition.meal_id
-        GROUP BY meals.category;
+        JOIN meal_categories ON meal_categories.id = meals.category_id
+        GROUP BY meal_categories.id;
     """)
-
     results = cursor.fetchall()
     return {row[0]: row[1] for row in results}
 
@@ -18,14 +18,14 @@ def calculate_recipe_cost(cursor):
     cursor.execute("""
         SELECT meals.name,
             SUM(COALESCE(grocery_products.regular_price, 0))
-        FROM ingredients
+        FROM meal_ingredients
+        JOIN ingredients ON ingredients.id = meal_ingredients.ingredient_id
         LEFT JOIN grocery_products
-            ON ingredients.ingredient = grocery_products.ingredient_name
+            ON ingredients.name = grocery_products.ingredient_name
         JOIN meals
-            ON ingredients.meal_id = meals.id
+            ON meal_ingredients.meal_id = meals.id
         GROUP BY meals.id, meals.name;
     """)
-
     results = cursor.fetchall()
     return {row[0]: row[1] for row in results}
 

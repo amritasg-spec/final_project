@@ -4,48 +4,6 @@ import sqlite3
 APP_KEY = '1'
 BASE_URL = f'https://www.themealdb.com/api/json/v1/{APP_KEY}/'
 
-# Look up this list to convert string tags to integer and vice versa
-tags = [
-    "Unknown",
-    "Baking",
-    "Breakfast",
-    "Casserole",
-    "Cheasy",
-    "Curry",
-    "Desert",
-    "Fish",
-    "Meat",
-    "Pasta",
-    "SideDish",
-    "Stew",
-    "Sweet",
-    "Treat",
-]
-
-def encode_tags(input_tags):
-    """
-    Convert a list of tags into integer IDs.
-    Unknown categories map to index 0 ("Unknown").
-    Duplicates are removed and the final list is sorted by ID.
-    """
-    if input_tags is None:
-        return []
-
-    # Build lookup table from the global master list
-    mapping = {tag: i for i, tag in enumerate(tags)}
-
-    unique_ids = set()
-
-    tag_list = input_tags.split(",")
-    for tag in tag_list:
-        if tag in mapping:
-            unique_ids.add(mapping[tag])
-        else:
-            print(f"[encode_tags] Warning: tag '{tag}' not found. Using ID 0.")
-            unique_ids.add(0)
-
-    return sorted(unique_ids)
-
 def get_mealdb(query, limit=25):
     url = BASE_URL + 'search.php'
     params = {'s': query}
@@ -62,18 +20,12 @@ def process_mealdb_result(data):
     result = []
 
     for meal in meals:
-        # Convert tags into a comma-separated list of IDs
-        encoded_tags = encode_tags(meal.get("strTags", []))
-        tags = ", ".join(str(n) for n in encoded_tags)
-
         meal_info = {
             "id": meal.get("idMeal"),
             "name": meal.get("strMeal"),
             "category": meal.get("strCategory"),
-            "area": meal.get("strArea"),
             "instructions": meal.get("strInstructions"),
             "thumbnail": meal.get("strMealThumb"),
-            "tags": tags,
             "youtube": meal.get("strYoutube"),
             "ingredients": []
         }
@@ -102,30 +54,55 @@ def process_mealdb_result(data):
     return result
 
 def create_meal_tables(cursor):
+    # table for storing categories
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS meal_categories (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE
+        );
+    """)
+
     # table for storing meals
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS meals (
             id INTEGER PRIMARY KEY,
             name TEXT,
-            category TEXT,
-            area TEXT,
+            category_id INTEGER,
             instructions TEXT,
             thumbnail TEXT,
-            tags TEXT,
-            youtube TEXT
+            youtube TEXT,
+            FOREIGN KEY (category_id) REFERENCES meal_categories(id)
         );
     """)
 
-    # table for storing the measure of each ingredient needed for each meal
+    # table for storing ingredients
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ingredients (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            meal_id INTEGER,
-            ingredient TEXT,
-            measure TEXT,
-            FOREIGN KEY (meal_id) REFERENCES meals(id)
+            name TEXT NOT NULL UNIQUE
         );
-    """)  
+    """)
+
+    # table for storing measures
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS measures (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE
+        );
+    """)
+
+    # table for storing meals, references ingredients and measures tables
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS meal_ingredients (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            meal_id INTEGER,
+            ingredient_id INTEGER,
+            measure_id INTEGER,
+            FOREIGN KEY (meal_id) REFERENCES meals(id),
+            FOREIGN KEY (ingredient_id) REFERENCES ingredients(id),
+            FOREIGN KEY (measure_id) REFERENCES measures(id)
+        );
+    """)
 
     # table for tracking our progress
     cursor.execute("""
@@ -155,28 +132,58 @@ def add_search_phrase(cur, search_phrase):
     )
 
 def store_meal(cursor, meal):
+    # Insert or get the category
     cursor.execute("""
-        INSERT OR REPLACE INTO meals (id, name, category, area, instructions, thumbnail, tags, youtube)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT OR IGNORE INTO meal_categories (name) VALUES (?)
+    """, (meal["category"],))
+    
+    cursor.execute("""
+        SELECT id FROM meal_categories WHERE name = ?
+    """, (meal["category"],))
+    category_id = cursor.fetchone()[0]
+    
+    # Insert the meal with category_id
+    cursor.execute("""
+        INSERT OR REPLACE INTO meals (id, name, category_id, instructions, thumbnail, youtube)
+        VALUES (?, ?, ?, ?, ?, ?)
     """, (
         meal["id"],
         meal["name"],
-        meal["category"],
-        meal["area"],
+        category_id,
         meal["instructions"],
         meal["thumbnail"],
-        meal["tags"],
         meal["youtube"]
     ))
-
-    for ingredient in meal["ingredients"]:
+    
+    for ingredient in meal["ingredients"]:  
+        # Insert or get the ingredient
         cursor.execute("""
-            INSERT INTO ingredients (meal_id, ingredient, measure)
+            INSERT OR IGNORE INTO ingredients (name) VALUES (?)
+        """, (ingredient["ingredient"],))
+        
+        cursor.execute("""
+            SELECT id FROM ingredients WHERE name = ?
+        """, (ingredient["ingredient"],))
+        ingredient_id = cursor.fetchone()[0]
+        
+        # Insert or get the measure
+        cursor.execute("""
+            INSERT OR IGNORE INTO measures (name) VALUES (?)
+        """, (ingredient["measure"],))
+        
+        cursor.execute("""
+            SELECT id FROM measures WHERE name = ?
+        """, (ingredient["measure"],))
+        measure_id = cursor.fetchone()[0]
+
+        # Insert the meal_ingredient relationship
+        cursor.execute("""
+            INSERT INTO meal_ingredients (meal_id, ingredient_id, measure_id)
             VALUES (?, ?, ?)
         """, (
             meal["id"],
-            ingredient["ingredient"],
-            ingredient["measure"]
+            ingredient_id,
+            measure_id
         ))
 
 def get_meals_by_ids(cursor, meal_ids):
@@ -186,21 +193,21 @@ def get_meals_by_ids(cursor, meal_ids):
     """
     if not meal_ids:
         return []
-
     placeholders = ",".join("?" * len(meal_ids))
     cursor.execute(f"SELECT id, name FROM meals WHERE id IN ({placeholders}) ORDER BY id;", meal_ids)
     meal_rows = cursor.fetchall()
-
     meals = []
-
     for meal_id, name in meal_rows:
         # Fetch ingredients for this meal
-        cursor.execute(
-            "SELECT ingredient, measure FROM ingredients WHERE meal_id = ? ORDER BY id;",
-            (meal_id,)
-        )
+        cursor.execute("""
+            SELECT ingredients.name, measures.name
+            FROM meal_ingredients
+            JOIN ingredients ON ingredients.id = meal_ingredients.ingredient_id
+            JOIN measures ON measures.id = meal_ingredients.measure_id
+            WHERE meal_ingredients.meal_id = ?
+            ORDER BY meal_ingredients.id;
+        """, (meal_id,))
         ingredient_rows = cursor.fetchall()
-
         meal = {
             "id": meal_id,
             "name": name,
@@ -209,9 +216,7 @@ def get_meals_by_ids(cursor, meal_ids):
                 for ing, measure in ingredient_rows
             ]
         }
-
         meals.append(meal)
-
     return meals
 
 if __name__ == "__main__":

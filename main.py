@@ -7,7 +7,7 @@ from kroger_api import get_kroger_products, store_kroger_products, create_grocer
 from mealdb_api import get_mealdb, process_mealdb_result, create_meal_tables, store_meal, get_meals_by_ids, search_phrase_exists, add_search_phrase
 
 tables = [
-    "ingredients",          # mealdb api
+    "meal_ingredients",     # mealdb api
     "grocery_products",     # kroger api
     "ingredient_nutrition", # edamam api
 ]
